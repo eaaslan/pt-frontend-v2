@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule - FitTrack Pro</title>
+    <link rel="stylesheet" href="../../assets/styles/base/reset.css" />
+    <link rel="stylesheet" href="../../assets/styles/base/variables.css" />
+    <link rel="stylesheet" href="../../assets/styles/base/typography.css" />
+    <link rel="stylesheet" href="../../assets/styles/components/navbar.css" />
+    <link rel="stylesheet" href="../../assets/styles/layouts/schedule.css" />
+  </head>
+  <body>
+    <div class="schedule-container">
+      <!-- Header Section -->
+      <header class="schedule-header">
+        <h1>Schedule</h1>
+        <div class="date-navigation">
+          <button id="prevDate" class="nav-button">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h2 id="currentDate">Today</h2>
+          <button id="nextDate" class="nav-button">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Time Slots Grid -->
+      <div class="time-slots" id="timeSlots">
+        <!-- Time slots will be populated by JavaScript -->
+      </div>
+
+      <!-- Appointment Details Modal -->
+      <div class="modal" id="appointmentModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Appointment Details</h3>
+            <button class="close-button" id="closeModal">×</button>
+          </div>
+          <div class="modal-body" id="modalBody">
+            <!-- Appointment details will be populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initNavbar } from "../../scripts/components/navbar.js";
+      document.addEventListener("DOMContentLoaded", initNavbar);
+    </script>
+    <script type="module" src="../../scripts/pages/schedule.js"></script>
+  </body>
+</html>
