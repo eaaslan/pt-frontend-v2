@@ -57,7 +57,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: pointer;
+  margin-bottom: var(--spacing-sm);
   transition: all 0.3s ease;
 }
 
@@ -67,21 +67,62 @@ body {
 
 .time-slot.available {
   border-left: 4px solid var(--color-success);
+  cursor: pointer;
 }
-
 .time-slot.booked {
   border-left: 4px solid var(--color-primary);
   background: rgba(76, 175, 80, 0.1);
 }
 
+.time-slot.unavailable {
+  border-left: 4px solid var(--color-error);
+  opacity: 0.7;
+}
+.time-slot.your-appointment {
+  border-left: 4px solid var(--color-primary);
+  background: rgba(76, 175, 80, 0.1);
+  cursor: pointer;
+}
+
 .time-slot .time {
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-md);
+  min-width: 100px;
 }
 
 .time-slot .status {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+}
+
+.time-slot.available .status {
+  color: var(--color-success);
+}
+
+.time-slot.unavailable .status {
+  color: var(--color-error);
+}
+
+.time-slot.your-appointment .status {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-md);
 }
 
 /* Modal Styles */
@@ -150,4 +191,41 @@ body {
   .time-slot .time {
     font-size: var(--font-size-md);
   }
+}
+.appointment-info {
+  flex: 1;
+  padding: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+.member-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.trainer-name {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Loading State */
+.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-md);
 }
