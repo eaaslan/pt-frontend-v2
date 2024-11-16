@@ -1,87 +1,146 @@
-//import { auth } from "../utils/auth.js";
 import { ScheduleDataService } from "../utils/scheduleData.js";
 
 class SchedulePage {
   constructor() {
     this.dataService = new ScheduleDataService();
+    this.daysToShow = 5;
+    this.timeSlots = Array.from({ length: 13 }, (_, i) => i + 9); // 9:00 to 21:00
 
-    // Available time slots (9AM to 5PM)
-    this.timeSlots = Array.from({ length: 9 }, (_, i) => i + 9);
-
-    this.currentDate = new Date();
-    this.appointments = [];
-    this.isLoading = false;
+    this.startDate = new Date();
+    this.appointments = {};
 
     // DOM Elements
-    this.timeSlotsContainer = document.getElementById("timeSlots");
-    this.currentDateElement = document.getElementById("currentDate");
-    this.modal = document.getElementById("appointmentModal");
-    this.modalBody = document.getElementById("modalBody");
+    this.slotsGrid = document.querySelector(".slots-grid");
+    this.timeColumn = document.querySelector(".time-column");
+    this.currentDateRange = document.querySelector(".date-range");
+    this.modal = document.querySelector(".modal");
+    this.pageTitle = document.querySelector(".schedule-header h1");
 
     this.init();
   }
 
   async init() {
     try {
-      // if (!auth.isAuthenticated()) {
-      //   window.location.href = "/pages/auth/login.html";
-      //   return;
-      // }
+      if (this.pageTitle) {
+        this.pageTitle.textContent = "Program";
+      }
 
-      // Add event listeners
       document
-        .getElementById("prevDate")
-        .addEventListener("click", () => this.changeDate(-1));
+        .querySelector("#prevDays")
+        ?.addEventListener("click", () => this.changeDays(-this.daysToShow));
       document
-        .getElementById("nextDate")
-        .addEventListener("click", () => this.changeDate(1));
+        .querySelector("#nextDays")
+        ?.addEventListener("click", () => this.changeDays(this.daysToShow));
       document
-        .getElementById("closeModal")
-        .addEventListener("click", () => this.closeModal());
+        .querySelector("#closeModal")
+        ?.addEventListener("click", () => this.closeModal());
 
+      this.renderTimeColumn();
       await this.loadAppointments();
       this.render();
     } catch (error) {
       console.error("Initialization error:", error);
-      this.showError("Failed to initialize schedule");
     }
+  }
+
+  renderTimeColumn() {
+    if (!this.timeColumn) return;
+
+    this.timeColumn.innerHTML = this.timeSlots
+      .map(
+        (hour) => `
+          <div class="time-slot">
+            <span>${this.formatTime(hour)}</span>
+          </div>
+        `
+      )
+      .join("");
+  }
+
+  getDatesRange() {
+    return Array.from({ length: this.daysToShow }, (_, i) => {
+      const date = new Date(this.startDate);
+      date.setDate(date.getDate() + i);
+      return date;
+    });
   }
 
   async loadAppointments() {
     try {
-      this.setLoading(true);
-      const response = await this.dataService.getAppointments(this.currentDate);
+      const dates = this.getDatesRange();
+      const promises = dates.map((date) =>
+        this.dataService.getAppointments(date)
+      );
 
-      if (response.success) {
-        this.appointments = response.appointments;
-      } else {
-        throw new Error(response.error || "Failed to load appointments");
-      }
+      const results = await Promise.all(promises);
+
+      this.appointments = {};
+      results.forEach((result, index) => {
+        if (result.success) {
+          const dateStr = this.formatDate(dates[index]);
+          this.appointments[dateStr] = result.appointments;
+        }
+      });
     } catch (error) {
       console.error("Error loading appointments:", error);
-      this.showError("Failed to load appointments");
-      this.appointments = [];
-    } finally {
-      this.setLoading(false);
     }
   }
 
   render() {
-    this.currentDateElement.textContent = this.formatDateForDisplay(
-      this.currentDate
-    );
-    this.timeSlotsContainer.innerHTML = "";
+    this.renderGrid();
+    this.updateDateRange();
+  }
 
-    this.timeSlots.forEach((hour) => {
-      const appointment = this.appointments.find((apt) => apt.time === hour);
-      const timeSlot = this.createTimeSlotElement(hour, appointment);
-      this.timeSlotsContainer.appendChild(timeSlot);
+  renderGrid() {
+    if (!this.slotsGrid) return;
+
+    const dates = this.getDatesRange();
+
+    // Render day headers
+    const headers = dates
+      .map(
+        (date) => `
+            <div class="day-header">
+                ${date.toLocaleDateString("tr-TR", {
+                  weekday: "short",
+                })} ${date.getDate()}
+            </div>
+        `
+      )
+      .join("");
+
+    // Render time slots
+    const timeSlots = this.timeSlots
+      .map((hour) => {
+        const rowSlots = dates
+          .map((date) => {
+            const dateStr = this.formatDate(date);
+            const dayAppointments = this.appointments[dateStr] || [];
+            const appointment = dayAppointments.find(
+              (apt) => apt.time === hour
+            );
+            return this.createSlot(hour, appointment);
+          })
+          .join("");
+
+        return `<div class="slot-row">${rowSlots}</div>`;
+      })
+      .join("");
+
+    this.slotsGrid.innerHTML = headers + timeSlots;
+
+    // Add click handlers
+    this.slotsGrid.querySelectorAll(".appointment-slot").forEach((slot) => {
+      slot.addEventListener("click", (e) => {
+        const appointmentData = e.currentTarget.dataset.appointment;
+        if (appointmentData) {
+          this.showAppointmentDetails(JSON.parse(appointmentData));
+        }
+      });
     });
   }
 
-  createTimeSlotElement(hour, appointment) {
-    const div = document.createElement("div");
-
+  createSlot(hour, appointment) {
     let status = "available";
     if (appointment) {
       status = appointment.isOwnAppointment
@@ -89,86 +148,94 @@ class SchedulePage {
         : "unavailable";
     }
 
-    div.className = `time-slot ${status}`;
-
-    div.innerHTML = `
-            <span class="time">${this.formatTime(hour)}</span>
-            <span class="status">
-                ${this.getStatusText(status)}
-            </span>
+    return `
+            <div class="appointment-slot ${status}"
+                 ${
+                   appointment?.isOwnAppointment
+                     ? `data-appointment='${JSON.stringify(appointment)}'`
+                     : ""
+                 }>
+            </div>
         `;
-
-    if (appointment?.isOwnAppointment) {
-      div.addEventListener("click", () =>
-        this.showAppointmentDetails(appointment)
-      );
-    }
-
-    return div;
   }
 
-  getStatusText(status) {
-    switch (status) {
-      case "your-appointment":
-        return "Your Appointment";
-      case "unavailable":
-        return "Unavailable";
-      default:
-        return "Available";
-    }
+  updateDateRange() {
+    if (!this.currentDateRange) return;
+
+    const dates = this.getDatesRange();
+    const startDate = dates[0];
+    const endDate = dates[dates.length - 1];
+
+    this.currentDateRange.textContent = `${startDate.toLocaleDateString(
+      "tr-TR",
+      {
+        day: "numeric",
+        month: "short",
+      }
+    )} - ${endDate.toLocaleDateString("tr-TR", {
+      day: "numeric",
+      month: "short",
+    })}`;
+  }
+
+  async changeDays(offset) {
+    this.startDate.setDate(this.startDate.getDate() + offset);
+    await this.loadAppointments();
+    this.render();
   }
 
   showAppointmentDetails(appointment) {
-    this.modalBody.innerHTML = `
+    if (!this.modal) return;
+
+    const modalBody = this.modal.querySelector(".modal-body");
+    if (!modalBody) return;
+
+    modalBody.innerHTML = `
             <div class="appointment-details">
-                <p><strong>Time:</strong> ${this.formatTime(
+                <p><strong>Saat:</strong> ${this.formatTime(
                   appointment.time
                 )}</p>
-                <p><strong>Trainer:</strong> ${appointment.ptName}</p>
-                <p><strong>Status:</strong> ${appointment.status}</p>
+                <p><strong>Durum:</strong> ${this.getStatusText(
+                  appointment.status
+                )}</p>
+                ${
+                  appointment.ptName
+                    ? `<p><strong>Eğitmen:</strong> ${appointment.ptName}</p>`
+                    : ""
+                }
             </div>
         `;
 
     this.modal.classList.add("active");
   }
 
-  closeModal() {
-    this.modal.classList.remove("active");
-  }
-
-  async changeDate(offset) {
-    this.currentDate.setDate(this.currentDate.getDate() + offset);
-    await this.loadAppointments();
-    this.render();
-  }
-
-  setLoading(isLoading) {
-    this.isLoading = isLoading;
-    const loadingClass = "is-loading";
-
-    if (isLoading) {
-      this.timeSlotsContainer.classList.add(loadingClass);
-    } else {
-      this.timeSlotsContainer.classList.remove(loadingClass);
+  getStatusText(status) {
+    switch (status) {
+      case "SCHEDULED":
+        return "Planlandı";
+      case "COMPLETED":
+        return "Tamamlandı";
+      case "CANCELLED":
+        return "İptal Edildi";
+      default:
+        return status;
     }
   }
 
-  formatDateForDisplay(date) {
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  closeModal() {
+    if (!this.modal) return;
+    this.modal.classList.remove("active");
+  }
+
+  formatDate(date) {
+    return date.toISOString().split("T")[0];
   }
 
   formatTime(hour) {
-    const period = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour > 12 ? hour - 12 : hour;
-    return `${displayHour}:00 ${period}`;
+    return `${hour}:00`;
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const schedulePage = new SchedulePage();
+  new SchedulePage();
 });

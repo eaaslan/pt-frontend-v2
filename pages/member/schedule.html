@@ -12,11 +12,10 @@
   </head>
   <body>
     <div class="schedule-container">
-      <!-- Header Section -->
       <header class="schedule-header">
         <h1>Schedule</h1>
         <div class="date-navigation">
-          <button id="prevDate" class="nav-button">
+          <button id="prevDays" class="nav-button">
             <svg
               viewBox="0 0 24 24"
               width="24"
@@ -28,8 +27,8 @@
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h2 id="currentDate">Today</h2>
-          <button id="nextDate" class="nav-button">
+          <div class="date-range" id="currentDateRange"></div>
+          <button id="nextDays" class="nav-button">
             <svg
               viewBox="0 0 24 24"
               width="24"
@@ -44,21 +43,29 @@
         </div>
       </header>
 
-      <!-- Time Slots Grid -->
-      <div class="time-slots" id="timeSlots">
-        <!-- Time slots will be populated by JavaScript -->
+      <!-- Days Navigation -->
+      <div class="days-nav" id="daysNav">
+        <!-- Day tabs will be added by JS -->
       </div>
 
-      <!-- Appointment Details Modal -->
+      <!-- Schedule Grid -->
+      <div class="schedule-grid">
+        <div class="time-column">
+          <!-- Time slots will be added by JS -->
+        </div>
+        <div class="slots-grid" id="slotsGrid">
+          <!-- Appointment slots will be added by JS -->
+        </div>
+      </div>
+
+      <!-- Modal -->
       <div class="modal" id="appointmentModal">
         <div class="modal-content">
           <div class="modal-header">
             <h3>Appointment Details</h3>
             <button class="close-button" id="closeModal">×</button>
           </div>
-          <div class="modal-body" id="modalBody">
-            <!-- Appointment details will be populated by JavaScript -->
-          </div>
+          <div class="modal-body" id="modalBody"></div>
         </div>
       </div>
     </div>
